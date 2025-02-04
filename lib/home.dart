@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:railway_app/train_page.dart';
 
 class MyHome extends StatefulWidget {
   const MyHome({super.key});
@@ -24,9 +25,9 @@ class _MyHomeState extends State<MyHome> {
             mainAxisAlignment: MainAxisAlignment.center, // Centers the Column content
             children: [
               _buildCustomButton("Click Here To Check "
-                  "Live Status"),
+                  "Live Status" , context),
               SizedBox(height: 20),
-              _buildCustomButton("Click Here To Check PNR Status"),
+              _buildCustomButton("Click Here To Check PNR Status" , context),
               SizedBox(height: 20),
             ],
           ),
@@ -35,10 +36,12 @@ class _MyHomeState extends State<MyHome> {
     );
   }
 }
-Widget _buildCustomButton(String text) {
+Widget _buildCustomButton(String text, BuildContext context) {
   return InkWell(
-    onTap: () {
-      print("hello");
+    onTap: () {Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TrainPage()),
+    );
     },
     child: Container(
       width: double.infinity,
