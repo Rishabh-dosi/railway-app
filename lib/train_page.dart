@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:railway_app/service/railway_service.dart';  // Import the service class
+import 'dart:convert';  // To encode the Map as a string for displaying
 
 class TrainPage extends StatefulWidget {
   const TrainPage({super.key});
@@ -8,8 +10,11 @@ class TrainPage extends StatefulWidget {
 }
 
 class _TrainPageState extends State<TrainPage> {
-  String _trainNo = ''; // Initialize with an empty string
-  DateTime? _selectedDate; // Make it nullable initially
+  String _trainNo = ''; // Store the entered train number
+  DateTime? _selectedDate; // Store the selected date
+  final RailwayService _railwayService = RailwayService(); // Instance of the service
+  Map<String, dynamic> _apiResponse = {}; // Store the entire API response as a map
+  bool _isLoading = false; // To manage loading state
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +26,7 @@ class _TrainPageState extends State<TrainPage> {
         padding: EdgeInsets.all(12),
         child: Column(
           children: [
-            // TextField to enter train number
+            // TextField to enter the train number
             TextField(
               decoration: InputDecoration(
                 border: OutlineInputBorder(
@@ -32,7 +37,7 @@ class _TrainPageState extends State<TrainPage> {
               ),
               onChanged: (text) {
                 setState(() {
-                  _trainNo = text; // Update _trainNo when text changes
+                  _trainNo = text; // Update train number on text change
                 });
               },
             ),
@@ -40,7 +45,7 @@ class _TrainPageState extends State<TrainPage> {
 
             Row(
               children: [
-                // Calendar icon to open date picker
+                // Calendar icon to open the date picker
                 IconButton(
                   onPressed: () async {
                     DateTime? selectedDate = await showDatePicker(
@@ -66,15 +71,58 @@ class _TrainPageState extends State<TrainPage> {
                       ? "${_selectedDate!.toLocal()}".split(' ')[0]
                       : "No date selected",
                 ),
-
                 Spacer(),
-                IconButton(onPressed: (){ print(_trainNo + " " + _selectedDate.toString());}, icon: Icon(Icons.search))
+
+                // Search Button to call the API
+                IconButton(
+                  onPressed: () async {
+                    if (_trainNo.isNotEmpty && _selectedDate != null) {
+                      setState(() {
+                        _isLoading = true;
+                        _apiResponse = {}; // Clear previous response
+                      });
+
+                      try {
+                        var resp = await _railwayService.fetchItem();
+
+                        setState(() {
+                          _apiResponse = resp;
+                        });
+                      } catch (e) {
+                        setState(() {
+                          _apiResponse = {"error": "Error: $e"};
+                        });
+                      } finally {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      }
+                    } else {
+                      setState(() {
+                        _apiResponse = {"error": "Please enter a train number and select a date."};
+                      });
+                    }
+                  },
+                  icon: Icon(Icons.search),
+                ),
               ],
             ),
             SizedBox(height: 20),
 
-            // Display the train number entered
+            // Display train number entered
             Text('Train Number: $_trainNo'),
+
+            if (_isLoading) CircularProgressIndicator(),
+
+            // Display the entire API response map as a string
+            if (_apiResponse.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0),
+                child: Text(
+                  jsonEncode(_apiResponse), // Display the entire map as a string
+                  style: TextStyle(color: Colors.blue),
+                ),
+              ),
           ],
         ),
       ),
